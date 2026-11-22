@@ -1,0 +1,96 @@
+services:
+  benchmark:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pcc_benchmark_orchestrator
+    # Grant only NET_ADMIN capability for Linux tc/netem network shaping (no privileged: true needed)
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PCC_EXPERIMENT_MODE=${PCC_EXPERIMENT_MODE:-standard}
+      - PCC_NETWORK_INTERFACE=lo
+      - PCC_MPSPDZ_DIR=/opt/mp-spdz
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+      - ./results:/app/results
+    command: ["python3", "-m", "orchestrator.runner", "--mode", "${PCC_EXPERIMENT_MODE:-standard}"]
+
+  benchmark-quick:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pcc_benchmark_quick
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PCC_EXPERIMENT_MODE=quick
+      - PCC_NETWORK_INTERFACE=lo
+      - PCC_MPSPDZ_DIR=/opt/mp-spdz
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+      - ./results:/app/results
+    command: ["python3", "-m", "orchestrator.runner", "--mode", "quick"]
+
+  fhe:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pcc_fhe_service
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+      - ./results:/app/results
+    command:
+      - "python3"
+      - "-c"
+      - "from dataset import DatasetGenerator; from fhe import FHEBenchmarkEngine; ds = DatasetGenerator().generate('medium'); eng = FHEBenchmarkEngine(); print('FHE Aggregation:', eng.run_pipeline(ds, 'aggregation')); print('FHE Risk Multiplication:', eng.run_pipeline(ds, 'risk_multiplication'))"
+
+  smpc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pcc_smpc_service
+    environment:
+      - PCC_MPSPDZ_DIR=/opt/mp-spdz
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+      - ./results:/app/results
+    command:
+      - "python3"
+      - "-c"
+      - "from dataset import DatasetGenerator; from smpc import SMPCBenchmarkEngine; ds = DatasetGenerator().generate('medium'); eng = SMPCBenchmarkEngine(); print('SMPC Aggregation:', eng.run_pipeline(ds, 'aggregation')); print('SMPC Risk Multiplication:', eng.run_pipeline(ds, 'risk_multiplication'))"
+
+  analysis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pcc_analysis_service
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+      - ./results:/app/results
+    command:
+      - "python3"
+      - "-c"
+      - "from analysis import CrossoverAnalyzer, AcademicGraphGenerator; from reports import IEEEReportGenerator; cx = CrossoverAnalyzer().run_full_analysis(); AcademicGraphGenerator().generate_all_graphs(); print(IEEEReportGenerator().generate_and_compile(cx))"
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pcc_test_suite
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PCC_MPSPDZ_DIR=/opt/mp-spdz
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+      - ./results:/app/results
+    command: ["pytest", "-v", "tests/"]

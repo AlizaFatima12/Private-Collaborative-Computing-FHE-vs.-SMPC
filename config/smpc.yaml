@@ -1,0 +1,65 @@
+# MP-SPDZ Secure Multi-Party Computation Configurations
+smpc:
+  framework: "MP-SPDZ"
+  version_target: "0.4.4"
+  install_dir: "/opt/mp-spdz"
+  default_protocol: "semi_dishonest_majority_3p"
+  num_parties: 3
+  base_port: 15000
+  field_bit_length: 64
+  separate_preprocessing_phase: true
+  allow_triple_reuse: false
+  use_ssl_channels: true
+
+  protocols:
+    semi_dishonest_majority_3p:
+      description: "3-Party Additive Secret Sharing over F_p with OT-Based Beaver Multiplication Triples (Dishonest Majority)"
+      binary_online: "semi-party.x"
+      binary_offline: "semi-offline.x"
+      domain: "prime_field"
+      compiler_flags: ["-F", "64"]
+      secret_sharing_scheme: "Additive Secret Sharing over F_p (128-bit prime)"
+      multiplication_mechanism: "Beaver Multiplication Triples ([a], [b], [c]) generated via Oblivious Transfer (OT)"
+      security_model: "Semi-honest (passive)"
+      corruption_threshold: "Dishonest majority (t <= 2 of 3 parties; matches 3-out-of-3 Threshold FHE trust threshold)"
+      supports_offline_file_mode: true
+      batch_size: 10000
+
+    shamir_honest_majority_3p:
+      description: "3-Party Shamir Secret Sharing over F_p (Honest Majority)"
+      binary_online: "shamir-party.x"
+      binary_offline: "mal-shamir-offline.x"
+      domain: "prime_field"
+      compiler_flags: ["-F", "64"]
+      secret_sharing_scheme: "Shamir (t=1, n=3) Polynomial Secret Sharing over F_p"
+      multiplication_mechanism: "Beaver-style multiplication / DN07 resharing over Shamir shares"
+      security_model: "Semi-honest (passive)"
+      corruption_threshold: "Honest majority (t <= 1 of 3 parties; requires explicit trust assumption label when compared to dishonest-majority FHE)"
+      supports_offline_file_mode: false
+      batch_size: 10000
+
+    malicious_shamir_3p:
+      description: "3-Party Maliciously Secure Shamir Secret Sharing with Beaver Triple Sacrifice"
+      binary_online: "malicious-shamir-party.x"
+      binary_offline: "mal-shamir-offline.x"
+      domain: "prime_field"
+      compiler_flags: ["-F", "64"]
+      secret_sharing_scheme: "Shamir (t=1, n=3) Polynomial Secret Sharing over F_p"
+      multiplication_mechanism: "Beaver Multiplication Triples with Sacrifice Verification (Lindell-Nof)"
+      security_model: "Malicious (active with abort)"
+      corruption_threshold: "Honest majority (t <= 1 of 3 parties)"
+      supports_offline_file_mode: true
+      batch_size: 10000
+
+    mascot_malicious_3p:
+      description: "3-Party MASCOT Malicious Dishonest-Majority SPDZ with Authenticated Beaver Triples"
+      binary_online: "mascot-party.x"
+      binary_offline: "mascot-offline.x"
+      domain: "prime_field"
+      compiler_flags: ["-F", "64"]
+      secret_sharing_scheme: "SPDZ Authenticated Additive Secret Sharing with Information-Theoretic MACs"
+      multiplication_mechanism: "Authenticated Beaver Multiplication Triples via Malicious OT (MASCOT)"
+      security_model: "Malicious (active with abort)"
+      corruption_threshold: "Dishonest majority (t <= 2 of 3 parties)"
+      supports_offline_file_mode: true
+      batch_size: 10000

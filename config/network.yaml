@@ -1,0 +1,71 @@
+# Linux Traffic Control (tc / netem) Network Simulation Configuration
+network:
+  default_interface: "lo"
+  container_interface: "eth0"
+  default_latency_profile: "local"
+  default_bandwidth_profile: "high"
+  default_packet_loss_pct: 0.0
+  delay_symmetry: "symmetric"
+  verify_rtt_before_benchmark: true
+  rtt_probe_count: 3
+  restore_on_exit: true
+
+  latency_profiles:
+    local:
+      label: "Local LAN"
+      one_way_delay_ms: 1.0
+      expected_rtt_ms: 2.0
+      jitter_ms: 0.0
+    fast_wan:
+      label: "Fast WAN (Metro / Regional)"
+      one_way_delay_ms: 10.0
+      expected_rtt_ms: 20.0
+      jitter_ms: 0.5
+    moderate_wan:
+      label: "Moderate WAN (Continental)"
+      one_way_delay_ms: 50.0
+      expected_rtt_ms: 100.0
+      jitter_ms: 1.0
+    slow_wan:
+      label: "Slow WAN (Intercontinental)"
+      one_way_delay_ms: 100.0
+      expected_rtt_ms: 200.0
+      jitter_ms: 2.0
+    high_latency:
+      label: "High Latency WAN (Global / Satellite)"
+      one_way_delay_ms: 200.0
+      expected_rtt_ms: 400.0
+      jitter_ms: 3.0
+
+  bandwidth_profiles:
+    high:
+      label: "High Bandwidth (1 Gbps)"
+      rate_mbps: 1000.0
+      tc_rate: "1000mbit"
+      burst_kb: 256
+      limit_packets: 10000
+    medium:
+      label: "Medium Bandwidth (100 Mbps)"
+      rate_mbps: 100.0
+      tc_rate: "100mbit"
+      burst_kb: 128
+      limit_packets: 10000
+    restricted:
+      label: "Restricted Bandwidth (10 Mbps)"
+      rate_mbps: 10.0
+      tc_rate: "10mbit"
+      burst_kb: 64
+      limit_packets: 5000
+    very_restricted:
+      label: "Very Restricted Bandwidth (1 Mbps)"
+      rate_mbps: 1.0
+      tc_rate: "1mbit"
+      burst_kb: 32
+      limit_packets: 2000
+
+  asymmetric_overrides:
+    enabled: false
+    participant_delays_ms:
+      participant_a: 10.0
+      participant_b: 25.0
+      participant_c: 50.0

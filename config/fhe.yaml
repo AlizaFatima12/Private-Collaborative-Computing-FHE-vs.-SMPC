@@ -1,0 +1,76 @@
+# OpenFHE Cryptographic Parameter Configurations
+fhe:
+  library: "OpenFHE"
+  version_target: "1.6.1.0"
+  default_profile: "threshold_bfv_128"
+  serialization_mode: "BINARY"
+  network_transport_enabled: true
+
+  profiles:
+    threshold_bfv_128:
+      description: "3-Party Threshold BFV-RNS with Collective KeyGen, Collective EvalMultKeyGen, and Distributed Threshold Decryption"
+      scheme: "BFVRNS"
+      mode: "threshold_multiparty"
+      num_parties: 3
+      security_level: "HEStd_128_classic"
+      plaintext_modulus: 536903681
+      multiplicative_depth: 1
+      batch_size: 4096
+      scaling_mod_size: 60
+      digit_size: 30
+      standard_deviation: 3.2
+      secret_key_dist: "UNIFORM_TERNARY"
+      multiparty_mode: "FIXED_NOISE_MULTIPARTY"
+      multiplication_technique: "HPSPOVERQLEVELED"
+      enable_eval_sum: false
+      trust_assumption: "Dishonest majority (3-out-of-3 threshold decryption; up to 2 of 3 colluding parties cannot decrypt without the remaining party)"
+
+    single_key_bfv_128:
+      description: "Single-Key BFV-RNS Baseline (Separated trust model: requires designated key holder or trusted decryptor)"
+      scheme: "BFVRNS"
+      mode: "single_key_baseline"
+      num_parties: 1
+      security_level: "HEStd_128_classic"
+      plaintext_modulus: 536903681
+      multiplicative_depth: 1
+      batch_size: 4096
+      scaling_mod_size: 60
+      digit_size: 30
+      standard_deviation: 3.2
+      secret_key_dist: "UNIFORM_TERNARY"
+      multiplication_technique: "HPSPOVERQLEVELED"
+      enable_eval_sum: false
+      trust_assumption: "Single key-holder / Designated decryptor (NOT equivalent to threshold multiparty FHE; evaluator cannot collude with decryptor)"
+
+    deep_bfv_128:
+      description: "High-Depth Noise-Flooding 3-Party Threshold BFV-RNS (n=16384, log2Q=300) for Noise Growth & Parameter Scaling Analysis"
+      scheme: "BFVRNS"
+      mode: "threshold_multiparty"
+      num_parties: 3
+      security_level: "HEStd_128_classic"
+      plaintext_modulus: 536903681
+      multiplicative_depth: 2
+      batch_size: 4096
+      scaling_mod_size: 60
+      digit_size: 30
+      standard_deviation: 3.2
+      secret_key_dist: "UNIFORM_TERNARY"
+      multiparty_mode: "NOISE_FLOODING_MULTIPARTY"
+      multiplication_technique: "HPSPOVERQLEVELED"
+      enable_eval_sum: false
+      trust_assumption: "Dishonest majority (3-out-of-3 threshold decryption with statistical noise flooding)"
+
+    bootstrapping_ckks_exp:
+      description: "Separate Experimental Mode for Measuring FHE Bootstrapping Overhead (Not mixed with standard BFV evaluation)"
+      scheme: "CKKSRNS"
+      mode: "bootstrapping_experiment"
+      num_parties: 1
+      security_level: "HEStd_NotSet"
+      ring_dimension: 4096
+      multiplicative_depth: 18
+      scaling_mod_size: 59
+      first_mod_size: 60
+      batch_size: 16
+      level_budget: [4, 4]
+      levels_after_bootstrap: 10
+      trust_assumption: "Experimental single-key bootstrapping overhead benchmark"

@@ -1,0 +1,95 @@
+# Master Experiment Configuration for Private Collaborative Computing: FHE vs. SMPC
+experiment:
+  name: "fhe_vs_smpc_collaborative_computing"
+  version: "1.0.0"
+  random_seed: 42
+  num_participants: 3
+  participants:
+    - id: "participant_a"
+      index: 0
+      organization: "Bank Alpha (Retail Banking)"
+      host: "participant_a"
+      fhe_port: 9100
+      smpc_port: 5000
+    - id: "participant_b"
+      index: 1
+      organization: "Bank Beta (Commercial Treasury)"
+      host: "participant_b"
+      fhe_port: 9101
+      smpc_port: 5001
+    - id: "participant_c"
+      index: 2
+      organization: "Bank Gamma (Cross-Border Settlement)"
+      host: "participant_c"
+      fhe_port: 9102
+      smpc_port: 5002
+
+datasets:
+  currency_scale_factor: 1
+  amount_min: 10
+  amount_max: 200
+  risk_score_min: 1
+  risk_score_max: 10
+  partition_strategy: "balanced_deterministic"
+  profiles:
+    small: 100
+    medium: 1000
+    large: 10000
+    very_large: 50000
+    stress_test: 100000
+
+workloads:
+  aggregation:
+    name: "Secure Transaction Aggregation"
+    description: "Computes exact sum of transaction amounts, total transaction count, and exact floating-point average post-reconstruction."
+    operations:
+      - "sum"
+      - "count"
+      - "average"
+    division_policy: "post_decryption_exact"
+    authorized_recipients:
+      - "participant_a"
+      - "participant_b"
+      - "participant_c"
+
+  risk_multiplication:
+    name: "Secure Multiplicative Risk Calculation"
+    description: "Computes weighted risk exposure sum(x_i * w_i) where both transaction amount x_i and risk score weight w_i are encrypted/secret-shared."
+    formula: "RISK_TOTAL = SUM(x_i * w_i)"
+    weight_visibility: "private"
+    requires_ciphertext_multiplication: true
+    requires_beaver_triples: true
+    authorized_recipients:
+      - "participant_a"
+      - "participant_b"
+      - "participant_c"
+
+execution:
+  default_mode: "standard"
+  warmup_runs: 1
+  repetitions: 5
+  confidence_level: 0.95
+  validate_against_plaintext: true
+  fail_on_backend_unavailable: true
+  matrices:
+    quick:
+      dataset_profiles: ["small", "medium", "large"]
+      workloads: ["aggregation", "risk_multiplication"]
+      latency_profiles: ["local", "fast_wan", "moderate_wan", "slow_wan", "high_latency"]
+      bandwidth_profiles: ["high", "medium", "restricted", "very_restricted"]
+      warmup_runs: 1
+      repetitions: 5
+    standard:
+      dataset_profiles: ["small", "medium", "large", "very_large", "stress_test"]
+      workloads: ["aggregation", "risk_multiplication"]
+      latency_profiles: ["local", "fast_wan", "moderate_wan", "slow_wan", "high_latency"]
+      bandwidth_profiles: ["high", "medium", "restricted", "very_restricted"]
+      warmup_runs: 1
+      repetitions: 5
+    full:
+      dataset_profiles: ["small", "medium", "large", "very_large", "stress_test"]
+      workloads: ["aggregation", "risk_multiplication"]
+      latency_profiles: ["local", "fast_wan", "moderate_wan", "slow_wan", "high_latency"]
+      bandwidth_profiles: ["high", "medium", "restricted", "very_restricted"]
+      warmup_runs: 2
+      repetitions: 5
