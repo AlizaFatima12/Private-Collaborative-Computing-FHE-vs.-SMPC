@@ -1,36 +1,46 @@
 # Master Experiment Configuration for Private Collaborative Computing: FHE vs. SMPC
+# Domain: 3-Hospital Multi-Region Collaborative Disease Research
 experiment:
-  name: "fhe_vs_smpc_collaborative_computing"
+  name: "fhe_vs_smpc_hospital_disease_research"
   version: "1.0.0"
+  domain: "multi_hospital_disease_research"
   random_seed: 42
   num_participants: 3
   participants:
     - id: "participant_a"
       index: 0
-      organization: "Bank Alpha (Retail Banking)"
+      organization: "Hospital Alpha (Northern Mountain Region)"
+      region: "NORTHERN_MOUNTAIN"
       host: "participant_a"
       fhe_port: 9100
       smpc_port: 5000
     - id: "participant_b"
       index: 1
-      organization: "Bank Beta (Commercial Treasury)"
+      organization: "Hospital Beta (Coastal Maritime Region)"
+      region: "COASTAL_MARITIME"
       host: "participant_b"
       fhe_port: 9101
       smpc_port: 5001
     - id: "participant_c"
       index: 2
-      organization: "Bank Gamma (Cross-Border Settlement)"
+      organization: "Hospital Gamma (Metro Urban Center)"
+      region: "METRO_URBAN"
       host: "participant_c"
       fhe_port: 9102
       smpc_port: 5002
 
 datasets:
-  currency_scale_factor: 1
+  clinical_scale_factor: 1
+  biomarker_min: 10
+  biomarker_max: 200
+  severity_min: 1
+  severity_max: 10
+  # Backward-compatible aliases for benchmark bounds
   amount_min: 10
   amount_max: 200
   risk_score_min: 1
   risk_score_max: 10
-  partition_strategy: "balanced_deterministic"
+  partition_strategy: "regional_diverse_deterministic"
   profiles:
     small: 100
     medium: 1000
@@ -40,8 +50,8 @@ datasets:
 
 workloads:
   aggregation:
-    name: "Secure Transaction Aggregation"
-    description: "Computes exact sum of transaction amounts, total transaction count, and exact floating-point average post-reconstruction."
+    name: "Multi-Center Disease Cohort Aggregation"
+    description: "Computes exact global sum of patient clinical biomarker levels, total cohort size, and exact multi-region mean post-reconstruction without sharing patient records."
     operations:
       - "sum"
       - "count"
@@ -53,8 +63,8 @@ workloads:
       - "participant_c"
 
   risk_multiplication:
-    name: "Secure Multiplicative Risk Calculation"
-    description: "Computes weighted risk exposure sum(x_i * w_i) where both transaction amount x_i and risk score weight w_i are encrypted/secret-shared."
+    name: "Collaborative Disease Severity Risk Index"
+    description: "Computes weighted disease severity exposure sum(x_i * w_i) where both patient biomarker reading x_i and clinical comorbidity weight w_i remain encrypted/secret-shared."
     formula: "RISK_TOTAL = SUM(x_i * w_i)"
     weight_visibility: "private"
     requires_ciphertext_multiplication: true

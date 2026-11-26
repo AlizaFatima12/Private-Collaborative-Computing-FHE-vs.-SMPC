@@ -55,8 +55,8 @@ class AcademicGraphGenerator:
         """Graph 1: Execution Time vs. Dataset Size across Local LAN and WAN profiles."""
         fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.5), sharey=False)
         workloads = [
-            ("aggregation", "Workload 1: Secure Aggregation"),
-            ("risk_multiplication", "Workload 2: Multiplicative Risk Calculation"),
+            ("aggregation", "Workload 1: Multi-Center Cohort Aggregation"),
+            ("risk_multiplication", "Workload 2: Collaborative Disease Severity Risk"),
         ]
 
         for ax, (wl_key, wl_title) in zip(axes, workloads):
@@ -94,7 +94,7 @@ class AcademicGraphGenerator:
                 )
 
             ax.set_title(wl_title, fontweight="bold")
-            ax.set_xlabel("Number of Transactions (N)")
+            ax.set_xlabel("Number of Patient Records (N)")
             ax.set_ylabel("Total Execution Time (seconds)")
             ax.set_xscale("log")
             ax.set_yscale("log")
@@ -116,8 +116,8 @@ class AcademicGraphGenerator:
         """Graph 2: Network Traffic (MB) vs. Configured Network Latency (ms)."""
         fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.4), sharey=False)
         workloads = [
-            ("aggregation", "Workload 1: Secure Aggregation"),
-            ("risk_multiplication", "Workload 2: Multiplicative Risk Calculation"),
+            ("aggregation", "Workload 1: Multi-Center Cohort Aggregation"),
+            ("risk_multiplication", "Workload 2: Collaborative Disease Severity Risk"),
         ]
 
         ref_ds = "medium" if "medium" in df["dataset_profile"].values else df["dataset_profile"].iloc[0]
@@ -173,8 +173,8 @@ class AcademicGraphGenerator:
         """Graph 3: Total Execution Time vs. Network Latency with Crossover Annotation."""
         fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.5), sharey=False)
         workloads = [
-            ("aggregation", "Workload 1: Secure Aggregation"),
-            ("risk_multiplication", "Workload 2: Multiplicative Risk Calculation"),
+            ("aggregation", "Workload 1: Multi-Center Cohort Aggregation"),
+            ("risk_multiplication", "Workload 2: Collaborative Disease Severity Risk"),
         ]
         ref_ds = "medium" if "medium" in df["dataset_profile"].values else df["dataset_profile"].iloc[0]
 
@@ -259,8 +259,8 @@ class AcademicGraphGenerator:
         """Graph 4: Execution Time vs. Available Network Bandwidth."""
         fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.5), sharey=False)
         workloads = [
-            ("aggregation", "Workload 1: Secure Aggregation"),
-            ("risk_multiplication", "Workload 2: Multiplicative Risk Calculation"),
+            ("aggregation", "Workload 1: Multi-Center Cohort Aggregation"),
+            ("risk_multiplication", "Workload 2: Collaborative Disease Severity Risk"),
         ]
         ref_ds = "small" if "small" in df["dataset_profile"].values else df["dataset_profile"].iloc[0]
         ref_lat = "moderate_wan" if "moderate_wan" in df["latency_profile"].values else "fast_wan"
@@ -418,7 +418,7 @@ class AcademicGraphGenerator:
             )
             ax2.set_xscale("log")
             ax2.set_yscale("log")
-            ax2.set_xlabel("Number of Transactions (N)")
+            ax2.set_xlabel("Number of Patient Records (N)")
             ax2.set_ylabel("Expansion Ratio (Crypto Bytes / Plaintext Bytes)")
             ax2.set_title("Storage Expansion Ratio Scaling (SIMD Packing Amortization)", fontweight="bold")
             ax2.legend(loc="best", frameon=True)

@@ -271,7 +271,7 @@ class CrossoverAnalyzer:
                         self._detect_1d_crossover(
                             sub_df=grp,
                             x_col="num_transactions",
-                            x_unit="transactions",
+                            x_unit="patients",
                             axis_name="dataset_size",
                             context_meta={
                                 "workload": wl,

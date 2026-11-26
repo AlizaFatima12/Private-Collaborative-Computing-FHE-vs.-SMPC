@@ -1,21 +1,21 @@
-# Private Collaborative Computing — A Comparative Performance Evaluation of Fully Homomorphic Encryption (FHE) and Secure Multi-Party Computation (SMPC)
+# Private Collaborative Computing — A Comparative Performance Evaluation of FHE and SMPC for Multi-Hospital Disease Research
 
 ## 1. Project Introduction
 
-This repository contains a complete, reproducible, Dockerized academic research and benchmarking framework comparing **Fully Homomorphic Encryption (FHE)** via **OpenFHE v1.6.1.0** against **Secure Multi-Party Computation (SMPC)** via **MP-SPDZ v0.4.4** across three simulated financial organizations (**Participant A: Retail Banking**, **Participant B: Commercial Treasury**, and **Participant C: Cross-Border Settlement**).
+This repository contains a complete, reproducible, Dockerized academic research and benchmarking framework comparing **Fully Homomorphic Encryption (FHE)** via **OpenFHE v1.6.1.0** against **Secure Multi-Party Computation (SMPC)** via **MP-SPDZ v0.4.4** across three simulated regional hospitals studying a novel disease (**Hospital Alpha: Northern Mountain Region**, **Hospital Beta: Coastal Maritime Region**, and **Hospital Gamma: Metro Urban Center**).
 
-Both cryptographic engines execute identical financial analytics workloads over identical deterministic synthetic transaction partitions under Linux kernel traffic-controlled (`tc` / `netem`) network latency and bandwidth conditions, automatically detecting performance crossover thresholds, generating publication-grade graphs (PNG & vector PDF), and compiling a 5–6 page IEEEtran LaTeX research paper.
+Because multi-region clinical cohorts have distinct regional baselines and cannot be pooled centrally due to patient privacy regulations (HIPAA/GDPR), both cryptographic engines execute identical collaborative clinical analytics workloads over deterministic, regionally diverse patient cohorts (or per-hospital CSV files) under Linux kernel traffic-controlled (`tc` / `netem`) network latency and bandwidth conditions. The orchestrator automatically detects performance crossover thresholds, generates publication-grade graphs (PNG & vector PDF), and compiles an IEEEtran LaTeX research paper.
 
 ---
 
 ## 2. Research Objectives
 
 The framework experimentally investigates the operational trade-offs and crossover boundaries across:
-- **FHE Ciphertext Expansion & SIMD Batching**: RLWE polynomial ring representation ($n = 16,384, \log_2 Q \approx 240\text{ bits}, p = 536,903,681$) with 4096-slot SIMD packing, collective 3-party key generation, tensor-product relinearization, and `NOISE_FLOODING_MULTIPARTY` threshold decryption.
+- **FHE Ciphertext Expansion & SIMD Batching**: RLWE polynomial ring representation ($n = 8,192\text{--}16,384, p = 536,903,681$) with 4096-slot SIMD packing, collective 3-hospital key generation, tensor-product relinearization, and 3-of-3 threshold decryption.
 - **FHE Noise Growth & Bootstrapping**: RNS modulus budget consumption across homomorphic addition and multiplication, plus an isolated CKKS bootstrapping overhead study (`bootstrapping_ckks_exp`).
 - **SMPC Secret Sharing & Beaver Multiplication Triples**: 3-party additive and Shamir secret sharing over a 128-bit prime field $\mathbb{F}_p$, Oblivious Transfer (OT) Beaver triple preprocessing $([a],[b],[c])$, and interactive online Beaver multiplication ($[x \cdot w] = [c] + d[b] + e[a] + de$).
 - **Orthogonal Scaling Dimensions**:
-  - **Dataset Size ($N$)**: `100` (*Small*), `1,000` (*Medium*), `10,000` (*Large*), `50,000` (*Very Large*), and `100,000` (*Stress Test*).
+  - **Cohort Size ($N$ patients)**: `100` (*Small*), `1,000` (*Medium*), `10,000` (*Large*), `50,000` (*Very Large*), and `100,000` (*Stress Test*).
   - **Network Latency ($L$)**: `1 ms` (*Local*), `10 ms` (*Fast WAN*), `50 ms` (*Moderate WAN*), `100 ms` (*Slow WAN*), and `200 ms` (*High Latency*).
   - **Network Bandwidth ($B$)**: `1 Gbps` (*High*), `100 Mbps` (*Medium*), `10 Mbps` (*Restricted*), and `1 Mbps` (*Very Restricted*).
 
@@ -25,10 +25,10 @@ The framework experimentally investigates the operational trade-offs and crossov
 
 ```mermaid
 flowchart LR
-    subgraph Orgs["3 Mutually Untrusting Organizations"]
-        A["Participant A\n(Retail Banking)"]
-        B["Participant B\n(Commercial Treasury)"]
-        C["Participant C\n(Cross-Border Settlement)"]
+    subgraph Orgs["3 Mutually Untrusting Regional Hospitals"]
+        A["Hospital Alpha\n(Northern Mountain Region)"]
+        B["Hospital Beta\n(Coastal Maritime Region)"]
+        C["Hospital Gamma\n(Metro Urban Center)"]
     end
 
     subgraph EngineFHE["OpenFHE v1.6.1.0 Engine (fhe/)"]
@@ -131,7 +131,20 @@ docker compose run --rm smpc
 docker compose run --rm analysis
 ```
 
-### 5. Generate Synthetic Datasets Programmatically
+### 5. Interactive Demonstration (CLI & Web GUI)
+For live presentations or interactive testing across the 3 hospitals:
+- **Interactive CLI Demo:**
+  ```bash
+  docker compose run --rm demo
+  # Or non-interactive with flags:
+  docker compose run --rm demo python3 -m demo.cli --size medium --workload risk_multiplication --latency moderate_wan --bandwidth restricted
+  ```
+- **Web GUI Dashboard (`http://localhost:8501`):**
+  ```bash
+  docker compose up gui
+  ```
+
+### 6. Generate Region-Diverse Hospital Cohorts Programmatically
 ```bash
 docker compose run --rm benchmark python3 -c "
 from dataset import DatasetGenerator, DatasetValidator
@@ -139,7 +152,7 @@ gen = DatasetGenerator()
 for prof in ['small', 'medium', 'large', 'very_large', 'stress_test']:
     ds = gen.generate(prof, seed=42, materialize_records=(prof in ['small', 'medium']))
     DatasetValidator.validate_dataset(ds, plaintext_modulus=536903681)
-    print(prof, 'N=', ds.total_transactions, 'Ref=', ds.reference.to_dict())
+    print(prof, 'N=', ds.total_patients, 'Ref=', ds.reference.to_dict())
 "
 ```
 
@@ -148,7 +161,7 @@ for prof in ['small', 'medium', 'large', 'very_large', 'stress_test']:
 ## 7. Configuration Instructions
 
 All experimental parameters are externalized in `config/`:
-- `config/experiment.yaml`: Random seed (`42`), participant metadata, transaction amount/risk bounds, dataset size profiles (`100` to `100,000`), workload definitions (`aggregation`, `risk_multiplication`), warm-up counts, and measured repetitions (`5`).
+- `config/experiment.yaml`: Random seed (`42`), 3 regional hospital metadata, clinical biomarker/severity bounds, cohort size profiles (`100` to `100,000`), workload definitions (`aggregation`, `risk_multiplication`), warm-up counts, and measured repetitions (`5`).
 - `config/fhe.yaml`: OpenFHE cryptographic parameter profiles (`threshold_bfv_128`, `single_key_bfv_128`, `deep_bfv_128`, `bootstrapping_ckks_exp`), ring dimensions, plaintext modulus ($536903681$), multiplicative depth, and SIMD batch size ($4096$).
 - `config/smpc.yaml`: MP-SPDZ protocol specifications (`semi_dishonest_majority_3p`, `shamir_honest_majority_3p`, `malicious_shamir_3p`, `mascot_malicious_3p`), prime-field bit lengths, and strict Beaver triple non-reuse policy (`allow_triple_reuse: false`).
 - `config/network.yaml`: Linux `tc`/`netem` latency profiles (`1 ms` to `200 ms`), bandwidth profiles (`1 Gbps` down to `1 Mbps`), packet loss percentage, and live RTT probe settings.

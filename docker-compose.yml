@@ -94,3 +94,41 @@ services:
       - .:/app
       - ./results:/app/results
     command: ["pytest", "-v", "tests/"]
+
+  demo:
+    image: private-collaborative-computing-benchmark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pcc_hospital_cli_demo
+    cap_add:
+      - NET_ADMIN
+    stdin_open: true
+    tty: true
+    environment:
+      - PCC_MPSPDZ_DIR=/opt/mp-spdz
+      - PCC_NETWORK_INTERFACE=lo
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+      - ./results:/app/results
+    command: ["python3", "-m", "demo.cli", "--interactive"]
+
+  gui:
+    image: private-collaborative-computing-benchmark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pcc_hospital_web_gui
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "8501:8501"
+    environment:
+      - PCC_MPSPDZ_DIR=/opt/mp-spdz
+      - PCC_NETWORK_INTERFACE=lo
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+      - ./results:/app/results
+    command: ["python3", "-m", "demo.web_gui", "--host", "0.0.0.0", "--port", "8501"]

@@ -1,0 +1,22 @@
+{
+  "experiment_mode": "quick",
+  "num_configurations": 30,
+  "warmup_runs_per_config": 0,
+  "measured_repetitions_per_config": 1,
+  "total_measured_trials": 60,
+  "suite_wall_time_s": 386.299,
+  "completed_at_utc": "2026-11-22T17:40:29Z",
+  "random_seed": 42,
+  "isolated_bootstrapping_study": {
+    "profile": "bootstrapping_ckks_exp",
+    "ring_dimension": 4096,
+    "ciphertext_modulus_bits": Infinity,
+    "multiplicative_depth_total": 32,
+    "bootstrap_keygen_time_s": 0.386787,
+    "bootstrap_eval_time_s": 3.957071,
+    "levels_remaining_before_bootstrap": 1,
+    "levels_remaining_after_bootstrap": 10,
+    "refreshed_ciphertext_bytes": 790998,
+    "max_approximation_error": 1e-06
+  }
+}

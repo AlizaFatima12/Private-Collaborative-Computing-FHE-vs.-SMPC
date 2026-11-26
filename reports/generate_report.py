@@ -263,13 +263,13 @@ class IEEEReportGenerator:
         if max_n >= 50000:
             status_note = (
                 f"This report presents results from the executed \\texttt{{{_tex_escape(mode_str)}}} "
-                f"experimental matrix covering {num_configs} configurations up to $N={max_n:,}$ transactions "
+                f"experimental matrix covering {num_configs} configurations up to $N={max_n:,}$ patient records "
                 f"with $R={reps}$ measured repetitions per configuration (plus warm-up runs)."
             )
         else:
             status_note = (
                 f"\\textit{{Preliminary Benchmark Notice:}} This report reflects the executed "
-                f"\\texttt{{{_tex_escape(mode_str)}}} matrix up to $N={max_n:,}$ transactions "
+                f"\\texttt{{{_tex_escape(mode_str)}}} matrix up to $N={max_n:,}$ patient records "
                 f"($R={reps}$ measured repetitions per configuration). Full stress-test configurations "
                 f"($N=50,000$ and $N=100,000$) can be executed via \\texttt{{--mode full}}."
             )

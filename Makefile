@@ -1,5 +1,5 @@
 # Makefile for Private Collaborative Computing: FHE vs. SMPC
-.PHONY: build benchmark benchmark-quick fhe smpc analysis report test clean
+.PHONY: build benchmark benchmark-quick fhe smpc analysis report test demo gui clean
 
 build:
 	docker compose build
@@ -21,6 +21,12 @@ analysis:
 
 test:
 	docker compose run --rm test
+
+demo:
+	docker compose run --rm demo
+
+gui:
+	docker compose up gui
 
 clean:
 	rm -rf results/raw/* results/processed/* results/graphs/* results/reports/*
