@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Private Collaborative Computing</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --card: #ffffff;
+      --subtle: #f3f4f6;
+      --border: #e5e7eb;
+      --border-strong: #d1d5db;
+      --text: #111827;
+      --muted: #6b7280;
+      --accent: #111827;
+      --accent-hover: #1f2937;
+      --ok: #15803d;
+      --ok-bg: #f0fdf4;
+      --ok-border: #bbf7d0;
+      --warn: #b45309;
+      --warn-bg: #fffbeb;
+      --warn-border: #fde68a;
+      --err: #b91c1c;
+      --err-bg: #fef2f2;
+      --err-border: #fecaca;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .header-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .brand p {
+      margin: 2px 0 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--subtle);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .tab-btn {
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--card);
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 24px 24px 64px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 0.96rem;
+      font-weight: 600;
+    }
+    .muted { color: var(--muted); font-size: 0.82rem; }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.76rem;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--subtle);
+      color: var(--muted);
+    }
+    .status-pill.ok { background: var(--ok-bg); color: var(--ok); border-color: var(--ok-border); }
+    .status-pill.warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-border); }
+    .status-pill.err { background: var(--err-bg); color: var(--err); border-color: var(--err-border); }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .grid-nodes {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .node-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      background: var(--card);
+    }
+    .node-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .node-name { font-size: 0.9rem; font-weight: 600; }
+    .node-meta {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+      line-height: 1.55;
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+    .add-org-panel {
+      background: var(--subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    select, input[type="text"] {
+      width: 100%;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+      border-radius: 7px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+    }
+    select:focus, input[type="text"]:focus {
+      outline: 2px solid #11182722;
+      border-color: var(--accent);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--accent);
+      color: #ffffff;
+      border: 1px solid var(--accent);
+      border-radius: 7px;
+      padding: 8px 15px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn.secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+    }
+    .btn.secondary:hover:not(:disabled) { background: var(--subtle); }
+    .btn.sm { padding: 5px 10px; font-size: 0.78rem; }
+    .btn.ghost-danger {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid transparent;
+      padding: 4px 8px;
+      font-size: 0.76rem;
+    }
+    .btn.ghost-danger:hover {
+      color: var(--err);
+      background: var(--err-bg);
+      border-color: var(--err-border);
+    }
+
+    .file-trigger {
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+    }
+    .file-trigger input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    details.advanced {
+      margin-top: 14px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+    details.advanced summary {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    details.advanced[open] summary {
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .kpi {
+      background: var(--subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .kpi-label { font-size: 0.74rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+    .kpi-val { font-size: 1.3rem; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { background: var(--subtle); color: var(--muted); font-weight: 500; font-size: 0.78rem; }
+    tr:last-child td { border-bottom: none; }
+
+    .audit-box {
+      background: var(--subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.78rem;
+      color: var(--text);
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+
+    .error-box {
+      background: var(--err-bg);
+      border: 1px solid var(--err-border);
+      color: var(--err);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <h1>Private Collaborative Computing</h1>
+        <p>Distributed Multi-Organization System &middot; Raw data and secret keys stay on each client node</p>
+      </div>
+      <div class="tabs">
+        <button id="btnTabRun" class="tab-btn active" onclick="switchTab('run')">Run Query</button>
+        <button id="btnTabAudit" class="tab-btn" onclick="switchTab('audit')">Audit Proof</button>
+        <button id="btnTabHistory" class="tab-btn" onclick="switchTab('history')">History</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="errorBox" class="error-box"></div>
+
+    <!-- TAB 1: RUN QUERY -->
+    <div id="tabRun">
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>1. Participant Organizations</h2>
+            <span id="schemaBadge" class="status-pill warn"><span class="dot"></span>Checking nodes...</span>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn sm" onclick="toggleAddOrg()">+ Add Organization</button>
+            <button class="btn secondary sm" onclick="loadSampleDatasetsToNodes()">Load Sample CSVs</button>
+            <button class="btn secondary sm" onclick="refreshCluster()">Refresh</button>
+          </div>
+        </div>
+
+        <div id="addOrgPanel" class="add-org-panel hidden">
+          <div class="form-grid">
+            <div>
+              <label for="newOrgName">Organization Name</label>
+              <input type="text" id="newOrgName" placeholder="e.g. Organization 4" />
+            </div>
+            <div>
+              <label for="newOrgTag">Location / Tag</label>
+              <input type="text" id="newOrgTag" placeholder="e.g. Site-4" />
+            </div>
+            <div>
+              <label for="newOrgUrl">Remote Node URL (optional)</label>
+              <input type="text" id="newOrgUrl" placeholder="Leave blank to auto-provision isolated node" />
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button id="confirmAddOrgBtn" class="btn sm" onclick="addOrganization()">Add</button>
+              <button class="btn secondary sm" onclick="toggleAddOrg(false)">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-nodes" id="nodesGrid"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>2. Collaborative Query</h2>
+          </div>
+          <span id="runStatus" class="muted">Waiting for matching datasets across all organizations</span>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label for="workloadSelect">Query Type</label>
+            <select id="workloadSelect" onchange="updateQueryFieldVisibility()"></select>
+          </div>
+          <div>
+            <label for="valueColSelect">Target Numeric Column</label>
+            <select id="valueColSelect"></select>
+          </div>
+          <div id="weightWrap">
+            <label for="weightColSelect">Weight Column</label>
+            <select id="weightColSelect"></select>
+          </div>
+          <div id="filterColWrap" class="hidden">
+            <label for="filterColSelect">Filter Column</label>
+            <select id="filterColSelect"></select>
+          </div>
+          <div id="filterValWrap" class="hidden">
+            <label for="filterValInput">Filter Value</label>
+            <input type="text" id="filterValInput" placeholder="e.g. GROUP_A" />
+          </div>
+          <div>
+            <label for="engineSelect">Privacy Engine</label>
+            <select id="engineSelect"></select>
+          </div>
+          <div>
+            <button id="runJobBtn" class="btn" style="width:100%;" onclick="submitJob()" disabled>Run Computation</button>
+          </div>
+        </div>
+
+        <details class="advanced">
+          <summary>Advanced cryptographic &amp; network options</summary>
+          <div class="form-grid">
+            <div>
+              <label for="fheProfileSelect">OpenFHE Profile</label>
+              <select id="fheProfileSelect"></select>
+            </div>
+            <div>
+              <label for="smpcProtoSelect">MP-SPDZ Protocol</label>
+              <select id="smpcProtoSelect"></select>
+            </div>
+            <div>
+              <label for="scaleSelect">Decimal Scaling</label>
+              <select id="scaleSelect">
+                <option value="auto" selected>Auto (1 ints / 100 decimals)</option>
+                <option value="1">1 (Exact Integer)</option>
+                <option value="10">10 (1 decimal)</option>
+                <option value="100">100 (2 decimals)</option>
+              </select>
+            </div>
+            <div>
+              <label for="latencySelect">WAN Latency (tc/netem)</label>
+              <select id="latencySelect"></select>
+            </div>
+            <div>
+              <label for="bandwidthSelect">Bandwidth Cap (tc/netem)</label>
+              <select id="bandwidthSelect"></select>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; padding-bottom:8px;">
+              <input type="checkbox" id="applyNetCheck" />
+              <label for="applyNetCheck" style="margin:0; cursor:pointer;">Simulate WAN shaping</label>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section id="latestResultCard" class="card hidden">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>3. Computed Result</h2>
+            <span id="resultMatchBadge" class="status-pill ok"><span class="dot"></span>Verified</span>
+          </div>
+          <button class="btn secondary sm" onclick="switchTab('audit')">Inspect Audit Proof</button>
+        </div>
+        <div class="kpi-grid" id="resultKpis"></div>
+        <div id="engineComparisonTable" class="table-wrap"></div>
+      </section>
+    </div>
+
+    <!-- TAB 2: AUDIT -->
+    <div id="tabAudit" class="hidden">
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>Zero-Leakage Verification</h2>
+            <span class="status-pill ok"><span class="dot"></span>Coordinator Blind</span>
+          </div>
+        </div>
+        <div id="auditSummaryTable" class="table-wrap" style="margin-bottom:14px;">
+          <table>
+            <tbody><tr><td class="muted">Run a job first to inspect cryptographic audit proof.</td></tr></tbody>
+          </table>
+        </div>
+        <details class="advanced" style="margin-top:0; border-top:none; padding-top:0;">
+          <summary>View raw audit JSON</summary>
+          <div id="auditDetails" class="audit-box">No job executed yet.</div>
+        </details>
+      </section>
+    </div>
+
+    <!-- TAB 3: HISTORY -->
+    <div id="tabHistory" class="hidden">
+      <section class="card">
+        <div class="card-header">
+          <h2>Completed Jobs</h2>
+          <button class="btn secondary sm" onclick="loadHistory()">Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Job ID</th><th>Time (UTC)</th><th>Nodes</th><th>Engine</th><th>Query</th><th>Rows</th><th>Result</th><th>Status</th></tr>
+            </thead>
+            <tbody id="historyBody"><tr><td colspan="8" class="muted">No jobs recorded yet.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    let clusterState = null;
+
+    function switchTab(name) {
+      document.getElementById("tabRun").classList.toggle("hidden", name !== "run");
+      document.getElementById("tabAudit").classList.toggle("hidden", name !== "audit");
+      document.getElementById("tabHistory").classList.toggle("hidden", name !== "history");
+      document.getElementById("btnTabRun").classList.toggle("active", name === "run");
+      document.getElementById("btnTabAudit").classList.toggle("active", name === "audit");
+      document.getElementById("btnTabHistory").classList.toggle("active", name === "history");
+      if (name === "history") loadHistory();
+    }
+
+    function showError(msg) {
+      const box = document.getElementById("errorBox");
+      if (!msg) { box.style.display = "none"; return; }
+      box.textContent = msg;
+      box.style.display = "block";
+    }
+
+    function toggleAddOrg(force) {
+      const panel = document.getElementById("addOrgPanel");
+      const show = typeof force === "boolean" ? force : panel.classList.contains("hidden");
+      panel.classList.toggle("hidden", !show);
+      if (show && clusterState) {
+        const nextNum = (clusterState.node_count || 3) + 1;
+        document.getElementById("newOrgName").value = `Organization ${nextNum}`;
+        document.getElementById("newOrgTag").value = `Site-${nextNum}`;
+        document.getElementById("newOrgUrl").value = "";
+      }
+    }
+
+    function fillSelect(id, items, isMap = true) {
+      const sel = document.getElementById(id);
+      const cur = sel.value;
+      sel.innerHTML = "";
+      if (isMap) {
+        for (const [k, v] of Object.entries(items)) {
+          const opt = document.createElement("option");
+          opt.value = k;
+          opt.textContent = v;
+          sel.appendChild(opt);
+        }
+      } else {
+        for (const k of items) {
+          const opt = document.createElement("option");
+          opt.value = k;
+          opt.textContent = k;
+          sel.appendChild(opt);
+        }
+      }
+      if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+    }
+
+    function updateQueryFieldVisibility() {
+      const wl = document.getElementById("workloadSelect").value;
+      document.getElementById("weightWrap").classList.toggle("hidden", wl !== "risk_multiplication");
+      document.getElementById("filterColWrap").classList.toggle("hidden", wl !== "filtered_aggregation");
+      document.getElementById("filterValWrap").classList.toggle("hidden", wl !== "filtered_aggregation");
+    }
+
+    async function refreshCluster() {
+      showError("");
+      const resp = await fetch("/api/cluster");
+      const data = await resp.json();
+      if (!resp.ok) { showError(data.error || "Failed to load cluster"); return; }
+      clusterState = data;
+
+      const opts = data.options || {};
+      if (!document.getElementById("engineSelect").options.length) {
+        fillSelect("engineSelect", opts.engines || {});
+        fillSelect("workloadSelect", opts.workloads || {});
+        fillSelect("fheProfileSelect", opts.fhe_profiles || [], false);
+        fillSelect("smpcProtoSelect", opts.smpc_protocols || [], false);
+        fillSelect("latencySelect", opts.latency_profiles || {});
+        fillSelect("bandwidthSelect", opts.bandwidth_profiles || {});
+        updateQueryFieldVisibility();
+      }
+
+      const totalNodes = data.node_count || data.nodes.length;
+      const grid = document.getElementById("nodesGrid");
+      grid.innerHTML = data.nodes.map((n, idx) => {
+        const portalUrl = `/node-portal/${idx}/`;
+        let pillClass = "warn";
+        let pillText = "No CSV";
+        if (!n.reachable) {
+          pillClass = "err";
+          pillText = "Offline";
+        } else if (n.dataset_loaded) {
+          pillClass = "ok";
+          pillText = `${n.row_count} rows`;
+        }
+        const cols = (n.columns || []).join(", ") || "None";
+        const removeBtn = totalNodes > 2
+          ? `<button class="btn ghost-danger" onclick="removeOrganization(${idx})" title="Remove organization">Remove</button>`
+          : "";
+        return `
+          <div class="node-card">
+            <div class="node-top">
+              <span class="node-name">${n.organization}</span>
+              <span class="status-pill ${pillClass}"><span class="dot"></span>${pillText}</span>
+            </div>
+            <div class="node-meta">
+              <div>File: <span class="mono">${n.dataset_filename || "none"}</span></div>
+              <div>Columns: <span class="mono">${cols}</span></div>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+              <label class="btn secondary sm file-trigger" style="margin:0;">
+                Upload CSV
+                <input type="file" id="nodeFile${idx}" accept=".csv,text/csv" onchange="uploadToNode(${idx}, event)" />
+              </label>
+              <div style="display:flex; gap:4px; align-items:center;">
+                <a class="btn secondary sm" href="${portalUrl}" target="_blank">Portal &nearr;</a>
+                ${removeBtn}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const sb = document.getElementById("schemaBadge");
+      const runBtn = document.getElementById("runJobBtn");
+      const runStatus = document.getElementById("runStatus");
+      if (data.reachable_nodes < totalNodes) {
+        sb.innerHTML = `<span class="dot"></span>${data.reachable_nodes}/${totalNodes} Nodes Online`;
+        sb.className = "status-pill err";
+        runBtn.disabled = true;
+      } else if (!data.all_datasets_loaded) {
+        sb.innerHTML = `<span class="dot"></span>${totalNodes} Nodes &middot; Waiting for CSVs`;
+        sb.className = "status-pill warn";
+        runBtn.disabled = true;
+      } else if (!data.schema_aligned) {
+        sb.innerHTML = `<span class="dot"></span>Schema Mismatch`;
+        sb.className = "status-pill err";
+        showError(data.schema_error || "Schema mismatch across nodes.");
+        runBtn.disabled = true;
+      } else {
+        sb.innerHTML = `<span class="dot"></span>${totalNodes} Nodes Aligned (${data.total_rows} rows)`;
+        sb.className = "status-pill ok";
+        runStatus.textContent = "Ready to compute";
+        fillSelect("valueColSelect", data.shared_numeric_columns, false);
+        fillSelect("weightColSelect", data.shared_numeric_columns, false);
+        fillSelect("filterColSelect", data.shared_columns, false);
+        runBtn.disabled = false;
+      }
+    }
+
+    async function addOrganization() {
+      showError("");
+      const btn = document.getElementById("confirmAddOrgBtn");
+      btn.disabled = true;
+      btn.textContent = "Adding...";
+      try {
+        const resp = await fetch("/api/organizations/add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            organization: document.getElementById("newOrgName").value,
+            tag: document.getElementById("newOrgTag").value,
+            url: document.getElementById("newOrgUrl").value
+          })
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          showError(data.error || "Failed to add organization");
+          return;
+        }
+        toggleAddOrg(false);
+        await refreshCluster();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Add";
+      }
+    }
+
+    async function removeOrganization(idx) {
+      showError("");
+      const resp = await fetch("/api/organizations/remove", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ node_index: idx })
+      });
+      const data = await resp.json();
+      if (!resp.ok) { showError(data.error || "Failed to remove organization"); return; }
+      refreshCluster();
+    }
+
+    async function uploadToNode(idx, ev) {
+      const file = ev.target.files[0];
+      if (!file) return;
+      const csvText = await file.text();
+      const resp = await fetch("/api/node/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ node_index: idx, csv_text: csvText, filename: file.name })
+      });
+      const data = await resp.json();
+      if (!resp.ok) { showError(data.error || "Upload failed"); return; }
+      refreshCluster();
+    }
+
+    async function loadSampleDatasetsToNodes() {
+      showError("");
+      const count = clusterState?.node_count || 3;
+      for (let idx = 0; idx < count; idx++) {
+        const sResp = await fetch(`/api/sample-csv/${idx + 1}`);
+        const sData = await sResp.json();
+        if (!sResp.ok) { showError(sData.error || "Sample missing"); return; }
+        const orgName = clusterState?.nodes?.[idx]?.organization || `Organization ${idx + 1}`;
+        const uResp = await fetch("/api/node/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            node_index: idx,
+            csv_text: sData.csv_text,
+            filename: sData.filename,
+            organization: orgName,
+            tag: `Site-${idx + 1}`
+          })
+        });
+        if (!uResp.ok) {
+          const uErr = await uResp.json();
+          showError(uErr.error || "Sample upload failed");
+          return;
+        }
+      }
+      refreshCluster();
+    }
+
+    async function submitJob() {
+      showError("");
+      const btn = document.getElementById("runJobBtn");
+      const st = document.getElementById("runStatus");
+      btn.disabled = true;
+      st.textContent = "Running protocol across nodes...";
+
+      const payload = {
+        engine: document.getElementById("engineSelect").value,
+        workload: document.getElementById("workloadSelect").value,
+        value_col: document.getElementById("valueColSelect").value,
+        weight_col: document.getElementById("weightColSelect").value,
+        filter_col: document.getElementById("filterColSelect").value,
+        filter_val: document.getElementById("filterValInput").value,
+        fhe_profile: document.getElementById("fheProfileSelect").value,
+        smpc_protocol: document.getElementById("smpcProtoSelect").value,
+        scale_mode: document.getElementById("scaleSelect").value,
+        latency_profile: document.getElementById("latencySelect").value,
+        bandwidth_profile: document.getElementById("bandwidthSelect").value,
+        apply_network: document.getElementById("applyNetCheck").checked
+      };
+
+      try {
+        const resp = await fetch("/api/jobs/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          showError(data.error || "Job failed");
+          st.textContent = "Failed";
+        } else {
+          renderJobResult(data);
+          st.textContent = `Completed (${data.job_id})`;
+        }
+      } catch (err) {
+        showError(String(err));
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function renderJobResult(job) {
+      document.getElementById("latestResultCard").classList.remove("hidden");
+      const badge = document.getElementById("resultMatchBadge");
+      if (job.cross_verification) {
+        const ok = job.cross_verification.exact_match;
+        badge.innerHTML = `<span class="dot"></span>${ok ? "Exact Match (FHE = SMPC)" : "Mismatch"}`;
+        badge.className = "status-pill " + (ok ? "ok" : "err");
+      } else {
+        badge.innerHTML = `<span class="dot"></span>${job.engine.toUpperCase()} Verified (${job.node_count || 3} orgs)`;
+        badge.className = "status-pill ok";
+      }
+
+      const out = job.outputs || {};
+      const kpis = Object.entries(out)
+        .filter(([k]) => !k.startsWith("scaled_") && k !== "primary_value")
+        .map(([k, v]) => `<div class="kpi"><div class="kpi-label">${k.replace(/_/g, " ")}</div><div class="kpi-val">${v}</div></div>`)
+        .join("");
+      document.getElementById("resultKpis").innerHTML = kpis;
+
+      const rows = [];
+      if (job.fhe) {
+        rows.push(`<tr><td>OpenFHE</td><td>${job.fhe.protocol} (${job.fhe.num_parties}-of-${job.fhe.num_parties})</td><td>${job.fhe.total_execution_time_s} s</td><td>${(job.fhe.protocol_network_bytes / 1024).toFixed(1)} KB</td><td>${job.fhe.communication_rounds}</td></tr>`);
+      }
+      if (job.smpc) {
+        rows.push(`<tr><td>MP-SPDZ</td><td>${job.smpc.protocol} (${job.smpc.num_parties}-party)</td><td>${job.smpc.total_execution_time_s} s</td><td>${(job.smpc.protocol_network_bytes / 1024).toFixed(1)} KB</td><td>${job.smpc.communication_rounds}</td></tr>`);
+      }
+      const net = job.network || {};
+      const netSummary = net.tc_shaping_active
+        ? `WAN shaping active (${net.configured_latency_ms} ms delay, ${net.configured_bandwidth_mbps} Mbps, measured RTT ${net.measured_cross_node_rtt_ms} ms)`
+        : `Unshaped container LAN (measured RTT ${net.measured_cross_node_rtt_ms ?? 0} ms)`;
+
+      document.getElementById("engineComparisonTable").innerHTML = `
+        <table>
+          <thead><tr><th>Engine</th><th>Protocol</th><th>Execution Time</th><th>Protocol Traffic</th><th>Rounds</th></tr></thead>
+          <tbody>${rows.join("")}</tbody>
+        </table>
+        <div class="muted" style="padding:8px 12px; border-top:1px solid var(--border);">${netSummary} &middot; Scale factor: ${job.scale_x}x</div>
+      `;
+
+      const auditRows = [
+        ["Job ID", `<span class="mono">${job.job_id}</span>`],
+        ["Participating Organizations", `${job.node_count || (job.participants || []).length}`],
+        ["Network Conditions", netSummary],
+        ["Decimal Scale Factors", `<span class="mono">x=${job.scale_x}, w=${job.scale_w}</span>`],
+        ["Raw CSV rows seen by Coordinator", "<strong>0</strong>"],
+        ["Secret keys held by Coordinator", "<strong>0</strong>"],
+      ];
+      if (job.fhe) {
+        auditRows.push(["OpenFHE Joint Public Key Digest", `<span class="mono">${job.fhe.audit_proof.public_key_digest}</span>`]);
+        auditRows.push(["Sample Ciphertext Digests", `<span class="mono">${(job.fhe.audit_proof.sample_ciphertext_digests || []).join(", ")}</span>`]);
+      }
+      if (job.smpc) {
+        auditRows.push(["MP-SPDZ Program Hash", `<span class="mono">${job.smpc.audit_proof.mpc_source_sha256}</span>`]);
+        auditRows.push(["Isolated Party IPs", `<span class="mono">${(job.smpc.audit_proof.party_hosts || []).join(", ")}</span>`]);
+      }
+      document.getElementById("auditSummaryTable").innerHTML = `
+        <table>
+          <thead><tr><th>Verification Check</th><th>Recorded Evidence</th></tr></thead>
+          <tbody>${auditRows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")}</tbody>
+        </table>
+      `;
+      document.getElementById("auditDetails").textContent = JSON.stringify(job, null, 2);
+    }
+
+    async function loadHistory() {
+      const resp = await fetch("/api/jobs");
+      const data = await resp.json();
+      const tbody = document.getElementById("historyBody");
+      const jobs = data.jobs || [];
+      if (!jobs.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="muted">No jobs recorded yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = jobs.map(j => `
+        <tr>
+          <td class="mono">${j.job_id}</td>
+          <td>${(j.created_at || "").replace("T", " ").slice(0, 19)}</td>
+          <td>${j.node_count || (j.participants || []).length}</td>
+          <td>${j.engine.toUpperCase()}</td>
+          <td>${j.workload}</td>
+          <td>${j.total_rows}</td>
+          <td><strong>${j.outputs?.primary_value ?? ""}</strong></td>
+          <td>${j.cross_verification ? (j.cross_verification.exact_match ? "Exact Match" : "Mismatch") : "Verified"}</td>
+        </tr>
+      `).join("");
+    }
+
+    refreshCluster();
+  </script>
+</body>
+</html>

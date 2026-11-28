@@ -21,3 +21,7 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Distributed Node & Coordinator Runtime Volumes
+volumes/
+

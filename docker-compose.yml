@@ -1,5 +1,130 @@
 services:
+  node-1:
+    image: private-collaborative-computing-benchmark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pcc_node_1
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "9101:9101"
+    environment:
+      - PCC_NODE_INDEX=0
+      - PCC_NODE_PORT=9101
+      - PCC_NODE_ORG=Organization 1
+      - PCC_NODE_TAG=Site-1
+      - PCC_NODE_DATA_DIR=/app/node_data
+      - PCC_MPSPDZ_DIR=/opt/mp-spdz
+      - PCC_NETWORK_INTERFACE=eth0
+      - PYTHONPATH=/app
+    volumes:
+      - ./system:/app/system
+      - ./fhe:/app/fhe
+      - ./smpc:/app/smpc
+      - ./networking:/app/networking
+      - ./config:/app/config
+      - ./volumes/node1:/app/node_data
+    networks:
+      - pcc_mesh
+    command: ["python3", "-m", "system.node_agent", "--index", "0", "--port", "9101"]
+
+  node-2:
+    image: private-collaborative-computing-benchmark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pcc_node_2
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "9102:9102"
+    environment:
+      - PCC_NODE_INDEX=1
+      - PCC_NODE_PORT=9102
+      - PCC_NODE_ORG=Organization 2
+      - PCC_NODE_TAG=Site-2
+      - PCC_NODE_DATA_DIR=/app/node_data
+      - PCC_MPSPDZ_DIR=/opt/mp-spdz
+      - PCC_NETWORK_INTERFACE=eth0
+      - PYTHONPATH=/app
+    volumes:
+      - ./system:/app/system
+      - ./fhe:/app/fhe
+      - ./smpc:/app/smpc
+      - ./networking:/app/networking
+      - ./config:/app/config
+      - ./volumes/node2:/app/node_data
+    networks:
+      - pcc_mesh
+    command: ["python3", "-m", "system.node_agent", "--index", "1", "--port", "9102"]
+
+  node-3:
+    image: private-collaborative-computing-benchmark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pcc_node_3
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "9103:9103"
+    environment:
+      - PCC_NODE_INDEX=2
+      - PCC_NODE_PORT=9103
+      - PCC_NODE_ORG=Organization 3
+      - PCC_NODE_TAG=Site-3
+      - PCC_NODE_DATA_DIR=/app/node_data
+      - PCC_MPSPDZ_DIR=/opt/mp-spdz
+      - PCC_NETWORK_INTERFACE=eth0
+      - PYTHONPATH=/app
+    volumes:
+      - ./system:/app/system
+      - ./fhe:/app/fhe
+      - ./smpc:/app/smpc
+      - ./networking:/app/networking
+      - ./config:/app/config
+      - ./volumes/node3:/app/node_data
+    networks:
+      - pcc_mesh
+    command: ["python3", "-m", "system.node_agent", "--index", "2", "--port", "9103"]
+
+  coordinator:
+    image: private-collaborative-computing-benchmark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pcc_coordinator
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      - node-1
+      - node-2
+      - node-3
+    ports:
+      - "8501:8501"
+    environment:
+      - PCC_COORDINATOR_PORT=8501
+      - PCC_NODE_URLS=http://node-1:9101,http://node-2:9102,http://node-3:9103
+      - PCC_COORDINATOR_DATA_DIR=/app/coordinator_data
+      - PCC_MPSPDZ_DIR=/opt/mp-spdz
+      - PCC_NETWORK_INTERFACE=eth0
+      - PYTHONPATH=/app
+    volumes:
+      - ./system:/app/system
+      - ./fhe:/app/fhe
+      - ./smpc:/app/smpc
+      - ./networking:/app/networking
+      - ./config:/app/config
+      - ./sample_datasets:/app/sample_datasets
+      - ./results:/app/results
+      - ./volumes/coordinator:/app/coordinator_data
+    networks:
+      - pcc_mesh
+    command: ["python3", "-m", "system.web_app", "--host", "0.0.0.0", "--port", "8501"]
+
   benchmark:
+    profiles: ["tools"]
     build:
       context: .
       dockerfile: Dockerfile
@@ -18,6 +143,7 @@ services:
     command: ["python3", "-m", "orchestrator.runner", "--mode", "${PCC_EXPERIMENT_MODE:-standard}"]
 
   benchmark-quick:
+    profiles: ["tools"]
     build:
       context: .
       dockerfile: Dockerfile
@@ -35,6 +161,7 @@ services:
     command: ["python3", "-m", "orchestrator.runner", "--mode", "quick"]
 
   fhe:
+    profiles: ["tools"]
     build:
       context: .
       dockerfile: Dockerfile
@@ -50,6 +177,7 @@ services:
       - "from dataset import DatasetGenerator; from fhe import FHEBenchmarkEngine; ds = DatasetGenerator().generate('medium'); eng = FHEBenchmarkEngine(); print('FHE Aggregation:', eng.run_pipeline(ds, 'aggregation')); print('FHE Risk Multiplication:', eng.run_pipeline(ds, 'risk_multiplication'))"
 
   smpc:
+    profiles: ["tools"]
     build:
       context: .
       dockerfile: Dockerfile
@@ -66,6 +194,7 @@ services:
       - "from dataset import DatasetGenerator; from smpc import SMPCBenchmarkEngine; ds = DatasetGenerator().generate('medium'); eng = SMPCBenchmarkEngine(); print('SMPC Aggregation:', eng.run_pipeline(ds, 'aggregation')); print('SMPC Risk Multiplication:', eng.run_pipeline(ds, 'risk_multiplication'))"
 
   analysis:
+    profiles: ["tools"]
     build:
       context: .
       dockerfile: Dockerfile
@@ -81,6 +210,7 @@ services:
       - "from analysis import CrossoverAnalyzer, AcademicGraphGenerator; from reports import IEEEReportGenerator; cx = CrossoverAnalyzer().run_full_analysis(); AcademicGraphGenerator().generate_all_graphs(); print(IEEEReportGenerator().generate_and_compile(cx))"
 
   test:
+    profiles: ["tools"]
     build:
       context: .
       dockerfile: Dockerfile
@@ -96,6 +226,7 @@ services:
     command: ["pytest", "-v", "tests/"]
 
   demo:
+    profiles: ["tools"]
     image: private-collaborative-computing-benchmark:latest
     build:
       context: .
@@ -115,6 +246,7 @@ services:
     command: ["python3", "-m", "demo.cli", "--interactive"]
 
   gui:
+    profiles: ["tools"]
     image: private-collaborative-computing-benchmark:latest
     build:
       context: .
@@ -132,3 +264,7 @@ services:
       - .:/app
       - ./results:/app/results
     command: ["python3", "-m", "demo.web_gui", "--host", "0.0.0.0", "--port", "8501"]
+
+networks:
+  pcc_mesh:
+    driver: bridge

@@ -1,0 +1,10 @@
+.git
+.pytest_cache
+__pycache__
+*.pyc
+.env
+volumes
+results/raw
+results/processed
+results/graphs
+results/reports

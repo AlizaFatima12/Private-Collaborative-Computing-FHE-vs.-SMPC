@@ -1,4 +1,33 @@
-# Private Collaborative Computing — A Comparative Performance Evaluation of FHE and SMPC for Multi-Hospital Disease Research
+# Private Collaborative Computing — Distributed System & FHE vs. SMPC Evaluation
+
+## 0. Real Distributed 4-Node System (`system/`)
+
+In addition to the academic benchmarking suite below, this repository runs a **domain-agnostic, 4-container distributed collaborative computing system**:
+- **3 Isolated Data-Owner Client Nodes (`node-1`, `node-2`, `node-3`)**: Each container mounts its own private data volume (`./volumes/node1`–`./volumes/node3`), holds only its own CSV dataset, generates/retains only its own OpenFHE secret key share (`sk_i`), and runs only its own MP-SPDZ TLS party (`P0`, `P1`, or `P2`).
+- **1 Untrusted Compute Coordinator (`coordinator`)**: Orchestrates jobs over `pcc_mesh` without ever seeing raw CSV rows or secret keys. Evaluates deserialized OpenFHE ciphertexts blindly (`EvalAdd` / `EvalMult`) or dispatches compiled `.mpc` bytecode to the 3 nodes, and logs Zero-Leakage Audit digests.
+
+### Launch the 4-Container System (One-Command / One-Click Startup)
+- **Windows (double-click or terminal):** `start.bat` (or `.\start.ps1`) — automatically starts Docker Desktop if needed, launches the 4-container cluster, waits until all 3 nodes are online, and opens the Coordinator Console. Stop with `stop.bat`.
+- **Linux / macOS / WSL:** `./start.sh` (stop with `./stop.sh`)
+- **Docker Compose directly:**
+```bash
+docker compose up -d
+# Or: make up
+```
+
+- **Coordinator Web Console:** `http://localhost:8501`
+- **Client Node 1 Portal:** `http://localhost:9101`
+- **Client Node 2 Portal:** `http://localhost:9102`
+- **Client Node 3 Portal:** `http://localhost:9103`
+- **Verify All 4 Workloads End-to-End Across Containers:** `docker compose exec coordinator python3 -m system.cli verify-e2e`
+
+Supported collaborative queries on any 3 matching-schema CSVs:
+- `aggregation`: Global `SUM`, `COUNT`, `MEAN`
+- `risk_multiplication`: Weighted Inner Product (`SUM(x_i * w_i)`)
+- `variance`: Global `Variance` and `Std Dev`
+- `filtered_aggregation`: Privacy-preserving filtered `SUM`, `COUNT`, `MEAN` (hides per-node match counts)
+
+---
 
 ## 1. Project Introduction
 
