@@ -1,31 +1,75 @@
 # Private Collaborative Computing — Distributed System & FHE vs. SMPC Evaluation
 
-## 0. Real Distributed 4-Node System (`system/`)
+## 0. Distributed Multi-Organization System (`system/`)
 
-In addition to the academic benchmarking suite below, this repository runs a **domain-agnostic, 4-container distributed collaborative computing system**:
-- **3 Isolated Data-Owner Client Nodes (`node-1`, `node-2`, `node-3`)**: Each container mounts its own private data volume (`./volumes/node1`–`./volumes/node3`), holds only its own CSV dataset, generates/retains only its own OpenFHE secret key share (`sk_i`), and runs only its own MP-SPDZ TLS party (`P0`, `P1`, or `P2`).
-- **1 Untrusted Compute Coordinator (`coordinator`)**: Orchestrates jobs over `pcc_mesh` without ever seeing raw CSV rows or secret keys. Evaluates deserialized OpenFHE ciphertexts blindly (`EvalAdd` / `EvalMult`) or dispatches compiled `.mpc` bytecode to the 3 nodes, and logs Zero-Leakage Audit digests.
+This repository provides a **domain-agnostic, multi-container distributed collaborative computing system** supporting **any number of organizations ($N \ge 2$)** alongside the academic benchmarking suite below:
 
-### Launch the 4-Container System (One-Command / One-Click Startup)
-- **Windows (double-click or terminal):** `start.bat` (or `.\start.ps1`) — automatically starts Docker Desktop if needed, launches the 4-container cluster, waits until all 3 nodes are online, and opens the Coordinator Console. Stop with `stop.bat`.
-- **Linux / macOS / WSL:** `./start.sh` (stop with `./stop.sh`)
-- **Docker Compose directly:**
-```bash
-docker compose up -d
-# Or: make up
+- **Isolated Data-Owner Client Nodes (`node-1`, `node-2`, `node-3`, + dynamically added `Organization N`)**: Each organization runs in its own isolated vault (`./volumes/node1`–`./volumes/node3` or `coordinator_data/dynamic_nodes/`), holds **only its own** private CSV dataset, generates and retains **only its own** OpenFHE secret key share (`sk_i`, purged post-decryption), and executes **only its own** MP-SPDZ TLS party (`P0..P(N-1)`).
+- **Untrusted Compute & Orchestration Coordinator (`coordinator`)**: Orchestrates jobs over `pcc_mesh` without ever seeing raw CSV rows or secret keys. Validates schema alignment via column metadata only, executes blind OpenFHE evaluation (`EvalAdd` / `EvalMult`) on deserialized ciphertexts or dispatches compiled `.mpc` bytecode to all $N$ nodes, and records Zero-Leakage Audit digests.
+
+```mermaid
+flowchart LR
+    subgraph Nodes["Isolated Client Nodes (Private CSVs + Secret Keys)"]
+        N1["node-1 (:9101)\nOrg 1 Vault + sk_0"]
+        N2["node-2 (:9102)\nOrg 2 Vault + sk_1"]
+        N3["node-3 (:9103)\nOrg 3 Vault + sk_2"]
+        NN["Org N (Dynamic / Remote)\nVault + sk_(N-1)"]
+    end
+
+    subgraph Coord["Untrusted Coordinator (:8501)"]
+        C1["Web Console & Job API\n(0 Raw Rows, 0 Secret Keys)"]
+        C2["Blind OpenFHE Evaluator\n& N-of-N Threshold Fusion"]
+        C3["MP-SPDZ Bytecode Compiler\n& Zero-Leakage Audit"]
+    end
+
+    N1 & N2 & N3 & NN <-->|"OpenFHE: pk_i, CTs, partial dec"| Coord
+    N1 <-->|"MP-SPDZ TLS (OT / Beaver / Shares)"| N2
+    N2 <-->|"MP-SPDZ TLS"| N3
+    N3 <-->|"MP-SPDZ TLS"| NN
 ```
 
-- **Coordinator Web Console:** `http://localhost:8501`
-- **Client Node 1 Portal:** `http://localhost:9101`
-- **Client Node 2 Portal:** `http://localhost:9102`
-- **Client Node 3 Portal:** `http://localhost:9103`
-- **Verify All 4 Workloads End-to-End Across Containers:** `docker compose exec coordinator python3 -m system.cli verify-e2e`
+### One-Click / One-Command Startup
+- **Windows (double-click or terminal):** `start.bat` (or `.\start.ps1`) — starts Docker Desktop if needed, launches the 4-container cluster (`node-1`, `node-2`, `node-3`, `coordinator`), waits for all nodes to come online, and opens `http://localhost:8501`. Stop anytime with `stop.bat`.
+- **Linux / macOS / WSL:** `./start.sh` (stop with `./stop.sh`).
+- **Docker Compose directly:**
+  ```bash
+  docker compose up -d
+  # Or: make up
+  ```
 
-Supported collaborative queries on any 3 matching-schema CSVs:
-- `aggregation`: Global `SUM`, `COUNT`, `MEAN`
-- `risk_multiplication`: Weighted Inner Product (`SUM(x_i * w_i)`)
-- `variance`: Global `Variance` and `Std Dev`
-- `filtered_aggregation`: Privacy-preserving filtered `SUM`, `COUNT`, `MEAN` (hides per-node match counts)
+### Web Portals & CLI
+- **Coordinator Console:** `http://localhost:8501` (manage organizations via **+ Add Organization**, run queries, inspect **Audit Proof** & **History**)
+- **Standalone Client Node Portals:** `http://localhost:9101`, `http://localhost:9102`, `http://localhost:9103` (and `/node-portal/<index>/` on `:8501` for any dynamically added or remote organization)
+- **CLI Commands:**
+  ```bash
+  # Check cluster health & schema alignment
+  docker compose exec coordinator python3 -m system.cli health
+
+  # Add / remove organizations dynamically (auto-provisioned or remote --url)
+  docker compose exec coordinator python3 -m system.cli add-org --org "Organization 4" --tag "Site-4"
+  docker compose exec coordinator python3 -m system.cli remove-org --node 4
+
+  # Verify all 4 workloads end-to-end across all active nodes (OpenFHE + MP-SPDZ)
+  docker compose exec coordinator python3 -m system.cli verify-e2e
+
+  # Run a specific query with optional inter-container tc/netem WAN shaping
+  docker compose exec coordinator python3 -m system.cli run \
+    --engine both --workload aggregation --value-col primary_metric \
+    --apply-network --latency moderate_wan --bandwidth restricted
+  ```
+
+### Supported Queries & Cryptographic Options
+- **Queries (any matching-schema CSVs):**
+  - `aggregation`: Global `SUM`, `COUNT`, `MEAN`
+  - `risk_multiplication`: Weighted Inner Product ($\sum x_i \cdot w_i$)
+  - `variance`: Global `Variance` and `Std Dev`
+  - `filtered_aggregation`: Privacy-preserving filtered `SUM`, `COUNT`, `MEAN` (hides per-node match counts)
+- **Engines & Advanced Options:**
+  - **OpenFHE Profiles:** `threshold_bfv_128` (`FIXED_NOISE_MULTIPARTY`), `deep_bfv_128` (`NOISE_FLOODING_MULTIPARTY`)
+  - **MP-SPDZ Protocols:** `semi_dishonest_majority_3p`, `shamir_honest_majority_3p`, `malicious_shamir_3p`, `mascot_malicious_3p`
+  - **Decimal Scaling:** `auto`, `1`, `10`, `100` (with BFV plaintext-modulus overflow guard)
+  - **Inter-Container WAN Emulation:** Linux `tc`/`netem` latency & bandwidth shaping across containers
+- **Automated Test Suite (28 tests):** `docker compose run --rm test`
 
 ---
 
