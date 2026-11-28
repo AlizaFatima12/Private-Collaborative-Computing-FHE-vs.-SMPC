@@ -117,100 +117,14 @@ services:
       - ./networking:/app/networking
       - ./config:/app/config
       - ./sample_datasets:/app/sample_datasets
-      - ./results:/app/results
       - ./volumes/coordinator:/app/coordinator_data
     networks:
       - pcc_mesh
     command: ["python3", "-m", "system.web_app", "--host", "0.0.0.0", "--port", "8501"]
 
-  benchmark:
-    profiles: ["tools"]
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: pcc_benchmark_orchestrator
-    # Grant only NET_ADMIN capability for Linux tc/netem network shaping (no privileged: true needed)
-    cap_add:
-      - NET_ADMIN
-    environment:
-      - PCC_EXPERIMENT_MODE=${PCC_EXPERIMENT_MODE:-standard}
-      - PCC_NETWORK_INTERFACE=lo
-      - PCC_MPSPDZ_DIR=/opt/mp-spdz
-      - PYTHONPATH=/app
-    volumes:
-      - .:/app
-      - ./results:/app/results
-    command: ["python3", "-m", "orchestrator.runner", "--mode", "${PCC_EXPERIMENT_MODE:-standard}"]
-
-  benchmark-quick:
-    profiles: ["tools"]
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: pcc_benchmark_quick
-    cap_add:
-      - NET_ADMIN
-    environment:
-      - PCC_EXPERIMENT_MODE=quick
-      - PCC_NETWORK_INTERFACE=lo
-      - PCC_MPSPDZ_DIR=/opt/mp-spdz
-      - PYTHONPATH=/app
-    volumes:
-      - .:/app
-      - ./results:/app/results
-    command: ["python3", "-m", "orchestrator.runner", "--mode", "quick"]
-
-  fhe:
-    profiles: ["tools"]
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: pcc_fhe_service
-    environment:
-      - PYTHONPATH=/app
-    volumes:
-      - .:/app
-      - ./results:/app/results
-    command:
-      - "python3"
-      - "-c"
-      - "from dataset import DatasetGenerator; from fhe import FHEBenchmarkEngine; ds = DatasetGenerator().generate('medium'); eng = FHEBenchmarkEngine(); print('FHE Aggregation:', eng.run_pipeline(ds, 'aggregation')); print('FHE Risk Multiplication:', eng.run_pipeline(ds, 'risk_multiplication'))"
-
-  smpc:
-    profiles: ["tools"]
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: pcc_smpc_service
-    environment:
-      - PCC_MPSPDZ_DIR=/opt/mp-spdz
-      - PYTHONPATH=/app
-    volumes:
-      - .:/app
-      - ./results:/app/results
-    command:
-      - "python3"
-      - "-c"
-      - "from dataset import DatasetGenerator; from smpc import SMPCBenchmarkEngine; ds = DatasetGenerator().generate('medium'); eng = SMPCBenchmarkEngine(); print('SMPC Aggregation:', eng.run_pipeline(ds, 'aggregation')); print('SMPC Risk Multiplication:', eng.run_pipeline(ds, 'risk_multiplication'))"
-
-  analysis:
-    profiles: ["tools"]
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: pcc_analysis_service
-    environment:
-      - PYTHONPATH=/app
-    volumes:
-      - .:/app
-      - ./results:/app/results
-    command:
-      - "python3"
-      - "-c"
-      - "from analysis import CrossoverAnalyzer, AcademicGraphGenerator; from reports import IEEEReportGenerator; cx = CrossoverAnalyzer().run_full_analysis(); AcademicGraphGenerator().generate_all_graphs(); print(IEEEReportGenerator().generate_and_compile(cx))"
-
   test:
     profiles: ["tools"]
+    image: private-collaborative-computing-benchmark:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -222,48 +136,7 @@ services:
       - PYTHONPATH=/app
     volumes:
       - .:/app
-      - ./results:/app/results
     command: ["pytest", "-v", "tests/"]
-
-  demo:
-    profiles: ["tools"]
-    image: private-collaborative-computing-benchmark:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: pcc_hospital_cli_demo
-    cap_add:
-      - NET_ADMIN
-    stdin_open: true
-    tty: true
-    environment:
-      - PCC_MPSPDZ_DIR=/opt/mp-spdz
-      - PCC_NETWORK_INTERFACE=lo
-      - PYTHONPATH=/app
-    volumes:
-      - .:/app
-      - ./results:/app/results
-    command: ["python3", "-m", "demo.cli", "--interactive"]
-
-  gui:
-    profiles: ["tools"]
-    image: private-collaborative-computing-benchmark:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: pcc_hospital_web_gui
-    cap_add:
-      - NET_ADMIN
-    ports:
-      - "8501:8501"
-    environment:
-      - PCC_MPSPDZ_DIR=/opt/mp-spdz
-      - PCC_NETWORK_INTERFACE=lo
-      - PYTHONPATH=/app
-    volumes:
-      - .:/app
-      - ./results:/app/results
-    command: ["python3", "-m", "demo.web_gui", "--host", "0.0.0.0", "--port", "8501"]
 
 networks:
   pcc_mesh:

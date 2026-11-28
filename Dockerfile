@@ -60,4 +60,4 @@ COPY . /app
 # Ensure results subdirectories exist for volume mounts
 RUN mkdir -p /app/results/raw /app/results/processed /app/results/graphs /app/results/reports
 
-CMD ["python3", "-m", "orchestrator.runner", "--mode", "standard"]
+CMD ["python3", "-m", "system.web_app", "--host", "0.0.0.0", "--port", "8501"]

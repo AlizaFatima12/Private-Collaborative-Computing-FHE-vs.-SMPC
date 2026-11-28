@@ -1,8 +1,0 @@
-Conditions,Recommended Approach,Experimental Evidence
-"Small dataset (N=100), low latency (1 ms, 1 Gbps) [aggregation]",SMPC,FHE=0.522+/-0.000s (1.13 MB) vs. SMPC=0.213+/-0.000s (0.04 MB); SMPC 2.45x faster (p=0)
-"Small dataset (N=100), low latency (1 ms, 1 Gbps) [risk_multiplication]",SMPC,FHE=0.739+/-0.000s (1.89 MB) vs. SMPC=0.263+/-0.000s (1.86 MB); SMPC 2.81x faster (p=0)
-"Large dataset (N=10000), restricted bandwidth (10 Mbps, 50 ms) [aggregation]",SMPC,FHE=2.520+/-0.000s (1.13 MB) vs. SMPC=1.718+/-0.000s (0.04 MB); SMPC 1.47x faster (p=0)
-"Large dataset (N=10000), restricted bandwidth (10 Mbps, 50 ms) [risk_multiplication]",FHE,FHE=3.523+/-0.000s (1.89 MB) vs. SMPC=153.242+/-0.000s (178.29 MB); FHE 43.49x faster (p=0)
-"High latency WAN (200 ms delay, 1000 Mbps, N=1000) [aggregation]",FHE,FHE=5.890+/-0.000s (1.13 MB) vs. SMPC=6.017+/-0.000s (0.04 MB); FHE 1.02x faster (p=0)
-"High latency WAN (200 ms delay, 1000 Mbps, N=1000) [risk_multiplication]",FHE,FHE=7.971+/-0.000s (1.89 MB) vs. SMPC=13.915+/-0.000s (17.82 MB); FHE 1.75x faster (p=0)
-"High multiplicative workload (N=10000 dot-product, 1 ms, 1000 Mbps)",FHE,FHE=0.630+/-0.000s (1.89 MB) vs. SMPC=4.634+/-0.000s (177.84 MB); FHE 7.36x faster (p=0)
